@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎲 Casino Predictor Pro</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap');
+
+  :root {
+    --bg: #03040a;
+    --surface: #080c18;
+    --card: #0d1428;
+    --border: #1a2a4a;
+    --accent: #00d4ff;
+    --accent2: #ff6b00;
+    --accent3: #00ff88;
+    --gold: #ffd700;
+    --danger: #ff3366;
+    --text: #e0eaff;
+    --muted: #4a6080;
+    --tai: #ff4466;
+    --xiu: #44aaff;
+    --chan: #44ddaa;
+    --le: #ff8844;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 40% at 20% 10%, rgba(0,212,255,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 90%, rgba(255,107,0,0.05) 0%, transparent 60%),
+      repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(0,212,255,0.015) 40px, rgba(0,212,255,0.015) 41px),
+      repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(0,212,255,0.015) 40px, rgba(0,212,255,0.015) 41px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+  header {
+    text-align: center;
+    padding: 40px 20px 30px;
+    position: relative;
+  }
+
+  .logo {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(1.8rem, 5vw, 3.5rem);
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--gold) 50%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    filter: drop-shadow(0 0 20px rgba(0,212,255,0.5));
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+    color: var(--muted);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+
+  .scan-line {
+    position: absolute;
+    bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 200px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: scanPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes scanPulse { 0%,100%{opacity:0.3;width:100px} 50%{opacity:1;width:300px} }
+
+  /* CASINO SELECTOR */
+  .casino-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .casino-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 10px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .casino-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .casino-btn:hover::before, .casino-btn.active::before { opacity: 0.12; }
+  .casino-btn.active { border-color: var(--accent); box-shadow: 0 0 15px rgba(0,212,255,0.3); }
+
+  .casino-btn .name {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+    position: relative;
+    z-index: 1;
+  }
+
+  .casino-btn .apis {
+    font-size: 0.7rem;
+    color: var(--muted);
+    position: relative;
+    z-index: 1;
+    margin-top: 3px;
+  }
+
+  /* API TABS */
+  .api-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .api-tab {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    color: var(--muted);
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .api-tab:hover { border-color: var(--accent); color: var(--accent); }
+  .api-tab.active { background: rgba(0,212,255,0.1); border-color: var(--accent); color: var(--accent); }
+
+  /* MAIN PANEL */
+  .main-grid { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+  @media(max-width:800px) { .main-grid { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0,212,255,0.03);
+  }
+
+  .panel-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* HISTORY TABLE */
+  .history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  .history-table th {
+    padding: 10px 12px;
+    text-align: left;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+  }
+
+  .history-table td {
+    padding: 9px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    font-weight: 600;
+  }
+
+  .history-table tr:hover td { background: rgba(0,212,255,0.03); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-family: 'Orbitron', monospace;
+    letter-spacing: 0.05em;
+  }
+
+  .badge-tai { background: rgba(255,68,102,0.15); color: var(--tai); border: 1px solid rgba(255,68,102,0.3); }
+  .badge-xiu { background: rgba(68,170,255,0.15); color: var(--xiu); border: 1px solid rgba(68,170,255,0.3); }
+  .badge-chan { background: rgba(68,221,170,0.15); color: var(--chan); border: 1px solid rgba(68,221,170,0.3); }
+  .badge-le { background: rgba(255,136,68,0.15); color: var(--le); border: 1px solid rgba(255,136,68,0.3); }
+  .badge-md5 { background: rgba(255,215,0,0.1); color: var(--gold); border: 1px solid rgba(255,215,0,0.3); font-size:0.6rem; max-width:120px; overflow:hidden; text-overflow:ellipsis; }
+
+  /* PREDICTION BOX */
+  .predict-box {
+    padding: 24px;
+    text-align: center;
+  }
+
+  .predict-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    font-family: 'Orbitron', monospace;
+  }
+
+  .predict-result {
+    font-family: 'Orbitron', monospace;
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+    transition: all 0.3s;
+  }
+
+  .predict-result.TAI { color: var(--tai); text-shadow: 0 0 30px rgba(255,68,102,0.6); }
+  .predict-result.XIU { color: var(--xiu); text-shadow: 0 0 30px rgba(68,170,255,0.6); }
+  .predict-result.CHAN { color: var(--chan); text-shadow: 0 0 30px rgba(68,221,170,0.6); }
+  .predict-result.LE { color: var(--le); text-shadow: 0 0 30px rgba(255,136,68,0.6); }
+  .predict-result.default { color: var(--muted); text-shadow: none; }
+
+  .predict-conf {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .conf-bar-wrap { background: rgba(255,255,255,0.05); border-radius: 4px; height: 6px; margin: 8px 0 16px; overflow: hidden; }
+  .conf-bar { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.6s ease; }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 0 24px;
+  }
+
+  .stat-cell {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+
+  .stat-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+
+  /* STREAK */
+  .streak-display {
+    padding: 0 24px 16px;
+  }
+
+  .streak-dots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+  }
+
+  .dot {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.55rem;
+    font-weight: 700;
+    font-family: 'Orbitron', monospace;
+    transition: all 0.2s;
+  }
+
+  .dot-T { background: rgba(255,68,102,0.2); border: 1px solid var(--tai); color: var(--tai); }
+  .dot-X { background: rgba(68,170,255,0.2); border: 1px solid var(--xiu); color: var(--xiu); }
+  .dot-C { background: rgba(68,221,170,0.2); border: 1px solid var(--chan); color: var(--chan); }
+  .dot-L { background: rgba(255,136,68,0.2); border: 1px solid var(--le); color: var(--le); }
+
+  /* FETCH BUTTON */
+  .fetch-btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, rgba(0,212,255,0.15), rgba(255,107,0,0.15));
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    color: var(--accent);
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .fetch-btn:hover { background: linear-gradient(135deg, rgba(0,212,255,0.25), rgba(255,107,0,0.25)); box-shadow: 0 0 20px rgba(0,212,255,0.3); }
+  .fetch-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(0,212,255,0.3);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* AUTO REFRESH */
+  .auto-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    font-size: 0.8rem;
+  }
+
+  .toggle {
+    position: relative; width: 36px; height: 20px;
+    background: var(--border); border-radius: 10px; cursor: pointer; transition: background 0.2s;
+  }
+
+  .toggle.on { background: var(--accent); }
+
+  .toggle::after {
+    content: ''; position: absolute;
+    top: 2px; left: 2px;
+    width: 16px; height: 16px;
+    background: white; border-radius: 50%;
+    transition: transform 0.2s;
+  }
+
+  .toggle.on::after { transform: translateX(16px); }
+
+  .countdown-ring {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.7rem;
+    color: var(--accent2);
+  }
+
+  /* STATUS BAR */
+  .status-bar {
+    padding: 8px 20px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    font-size: 0.7rem;
+    color: var(--muted);
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent3); animation: blink 1.5s ease-in-out infinite; }
+  .status-dot.error { background: var(--danger); animation: none; }
+  .status-dot.loading { background: var(--gold); }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* SCROLLABLE */
+  .table-wrap { max-height: 400px; overflow-y: auto; }
+  .table-wrap::-webkit-scrollbar { width: 4px; }
+  .table-wrap::-webkit-scrollbar-track { background: transparent; }
+  .table-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* RESPONSIVE */
+  @media(max-width:600px) {
+    .casino-grid { grid-template-columns: repeat(3, 1fr); }
+    .predict-result { font-size: 1.8rem; }
+  }
+
+  .empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  .empty-icon { font-size: 2rem; margin-bottom: 10px; opacity: 0.3; }
+
+  .dice-icon { display: inline-block; animation: diceFloat 3s ease-in-out infinite; }
+  @keyframes diceFloat { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-6px) rotate(10deg)} }
+
+  .new-row { animation: rowFade 0.4s ease; }
+  @keyframes rowFade { from{background:rgba(0,212,255,0.08)} to{background:transparent} }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo">🎲 CASINO PREDICTOR</div>
+    <div class="subtitle">Real-time AI Prediction Engine · v2.0</div>
+    <div class="scan-line"></div>
+  </header>
+
+  <div class="section-label">Chọn nhà cái</div>
+  <div class="casino-grid" id="casinoGrid"></div>
+
+  <div class="api-tabs" id="apiTabs"></div>
+
+  <div class="main-grid">
+    <!-- LEFT: History -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">📊 Lịch sử kết quả</span>
+        <span id="roundCount" style="font-size:0.75rem;color:var(--muted)">0 phiên</span>
+      </div>
+      <div class="table-wrap" id="tableWrap">
+        <div class="empty-state">
+          <div class="empty-icon"><span class="dice-icon">🎲</span></div>
+          <div>Chọn nhà cái và nhấn <strong>LẤY DỮ LIỆU</strong></div>
+        </div>
+      </div>
+      <div class="status-bar">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText">Chờ kết nối...</span>
+      </div>
+    </div>
+
+    <!-- RIGHT: Prediction -->
+    <div>
+      <div class="panel" style="margin-bottom:16px">
+        <div class="panel-header">
+          <span class="panel-title">🔮 Dự đoán tiếp theo</span>
+        </div>
+        <div class="predict-box">
+          <div class="predict-label">Kết quả dự đoán</div>
+          <div class="predict-result default" id="predictResult">---</div>
+          <div class="predict-conf" id="predictConf">Chưa có dữ liệu</div>
+          <div class="conf-bar-wrap"><div class="conf-bar" id="confBar" style="width:0%"></div></div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-cell">
+            <div class="stat-value" id="statTai" style="color:var(--tai)">0</div>
+            <div class="stat-label">Tài</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-value" id="statXiu" style="color:var(--xiu)">0</div>
+            <div class="stat-label">Xỉu</div>
+          </div>
+        </div>
+
+        <div class="streak-display">
+          <div class="section-label">Cầu gần nhất</div>
+          <div class="streak-dots" id="streakDots"></div>
+        </div>
+
+        <div style="padding:0 16px 16px">
+          <button class="fetch-btn" id="fetchBtn" onclick="fetchData()">
+            <span>⚡ LẤY DỮ LIỆU & DỰ ĐOÁN</span>
+          </button>
+        </div>
+
+        <div class="auto-row">
+          <div class="toggle" id="autoToggle" onclick="toggleAuto()"></div>
+          <span style="color:var(--muted)">Tự động làm mới</span>
+          <span class="countdown-ring" id="countdown"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CASINOS = [
+  {
+    name: 'Sunwin', emoji: '☀️',
+    apis: [
+      { label: 'Tài Xỉu', url: 'https://bracket-ellen-roads-prefer.trycloudflare.com/api/tx', type: 'tx' },
+      { label: 'X88 Live', url: 'https://letters-carries-hip-seeking.trycloudflare.com/sun/x88', type: 'tx' },
+      { label: 'Sicbo', url: 'https://afterwards-motels-honors-vendors.trycloudflare.com/api/sunsicbo', type: 'sicbo' },
+    ]
+  },
+  {
+    name: 'Xd88', emoji: '🃏',
+    apis: [
+      { label: 'Tài Xỉu MD5', url: 'https://books-carlo-instruments-capture.trycloudflare.com/api/taixiu', type: 'md5' },
+    ]
+  },
+  {
+    name: 'Hitclub', emoji: '🎯',
+    apis: [
+      { label: 'Tài Xỉu', url: 'https://letting-tackle-newton-oak.trycloudflare.com/api/tx', type: 'tx' },
+    ]
+  },
+  {
+    name: 'Lc79', emoji: '🌀',
+    apis: [
+      { label: 'Tài Xỉu', url: 'https://chance-compete-chambers-feelings.trycloudflare.com/api/tx', type: 'tx' },
+      { label: 'MD5', url: 'https://chance-compete-chambers-feelings.trycloudflare.com/api/txmd5', type: 'md5' },
+      { label: 'Xóc Đĩa', url: 'https://chance-compete-chambers-feelings.trycloudflare.com/api/xocdia', type: 'xocdia' },
+    ]
+  },
+  {
+    name: 'Betvip', emoji: '💎',
+    apis: [
+      { label: 'Tài Xỉu', url: 'https://plastic-diet-visits-opens.trycloudflare.com/api/tx', type: 'tx' },
+      { label: 'MD5', url: 'https://plastic-diet-visits-opens.trycloudflare.com/api/txmd5', type: 'md5' },
+    ]
+  },
+  {
+    name: '789club', emoji: '🎰',
+    apis: [
+      { label: 'Tài Xỉu', url: 'https://dependent-epinions-somebody-enclosed.trycloudflare.com/api/tx', type: 'tx' },
+    ]
+  },
+  {
+    name: 'Max789', emoji: '🚀',
+    apis: [
+      { label: 'Tài Xỉu', url: 'https://cage-adjustment-whose-banner.trycloudflare.com/api/tx', type: 'tx' },
+    ]
+  },
+  {
+    name: 'B52', emoji: '✈️',
+    apis: [
+      { label: 'MD5', url: 'https://gold-ultra-fails-handles.trycloudflare.com/txmd5', type: 'md5' },
+    ]
+  },
+  {
+    name: 'Son789', emoji: '🌟',
+    apis: [
+      { label: 'MD5', url: 'https://tanks-gates-subscription-hosting.trycloudflare.com/api/txmd5', type: 'md5' },
+    ]
+  },
+  {
+    name: 'BCR Sexy', emoji: '💃',
+    apis: [
+      { label: 'BCR Live', url: 'https://classic-watching-cup-representatives.trycloudflare.com/api/bcr', type: 'bcr' },
+    ]
+  },
+  {
+    name: 'Luck8', emoji: '🍀',
+    apis: [
+      { label: 'MD5', url: 'https://heroes-presents-pound-tablet.trycloudflare.com/api/txmd5', type: 'md5' },
+      { label: 'Sicbo40', url: 'https://heroes-presents-pound-tablet.trycloudflare.com/api/sicbo40', type: 'sicbo' },
+    ]
+  },
+];
+
+let selectedCasino = 0;
+let selectedApi = 0;
+let autoRefresh = false;
+let autoTimer = null;
+let countdown = 30;
+let cdInterval = null;
+let historyData = [];
+
+// Build casino grid
+const grid = document.getElementById('casinoGrid');
+CASINOS.forEach((c, i) => {
+  const btn = document.createElement('div');
+  btn.className = 'casino-btn' + (i === 0 ? ' active' : '');
+  btn.innerHTML = `<span class="name">${c.emoji} ${c.name}</span><span class="apis">${c.apis.length} API</span>`;
+  btn.onclick = () => selectCasino(i);
+  grid.appendChild(btn);
+});
+
+function selectCasino(i) {
+  selectedCasino = i;
+  selectedApi = 0;
+  document.querySelectorAll('.casino-btn').forEach((b, idx) => b.classList.toggle('active', idx === i));
+  buildApiTabs();
+  resetDisplay();
+}
+
+function buildApiTabs() {
+  const tabs = document.getElementById('apiTabs');
+  tabs.innerHTML = '';
+  CASINOS[selectedCasino].apis.forEach((api, i) => {
+    const tab = document.createElement('div');
+    tab.className = 'api-tab' + (i === 0 ? ' active' : '');
+    tab.textContent = api.label;
+    tab.onclick = () => selectApi(i);
+    tabs.appendChild(tab);
+  });
+}
+
+function selectApi(i) {
+  selectedApi = i;
+  document.querySelectorAll('.api-tab').forEach((t, idx) => t.classList.toggle('active', idx === i));
+  resetDisplay();
+}
+
+function resetDisplay() {
+  historyData = [];
+  document.getElementById('tableWrap').innerHTML = `<div class="empty-state"><div class="empty-icon"><span class="dice-icon">🎲</span></div><div>Nhấn <strong>LẤY DỮ LIỆU</strong> để bắt đầu</div></div>`;
+  document.getElementById('roundCount').textContent = '0 phiên';
+  document.getElementById('predictResult').textContent = '---';
+  document.getElementById('predictResult').className = 'predict-result default';
+  document.getElementById('predictConf').textContent = 'Chưa có dữ liệu';
+  document.getElementById('confBar').style.width = '0%';
+  document.getElementById('statTai').textContent = '0';
+  document.getElementById('statXiu').textContent = '0';
+  document.getElementById('streakDots').innerHTML = '';
+  setStatus('idle', 'Chờ kết nối...');
+}
+
+function setStatus(state, msg) {
+  const dot = document.getElementById('statusDot');
+  dot.className = 'status-dot' + (state === 'error' ? ' error' : state === 'loading' ? ' loading' : '');
+  document.getElementById('statusText').textContent = msg;
+}
+
+async function fetchData() {
+  const btn = document.getElementById('fetchBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div><span>Đang tải...</span>';
+  setStatus('loading', 'Đang kết nối API...');
+
+  const api = CASINOS[selectedCasino].apis[selectedApi];
+  try {
+    const res = await fetch(api.url, { signal: AbortSignal.timeout(10000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const raw = await res.json();
+    processData(raw, api.type);
+    setStatus('ok', `Cập nhật lúc ${new Date().toLocaleTimeString('vi-VN')} · ${CASINOS[selectedCasino].name} - ${api.label}`);
+  } catch (e) {
+    setStatus('error', 'Lỗi kết nối: ' + e.message);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<span>⚡ LẤY DỮ LIỆU & DỰ ĐOÁN</span>';
+}
+
+function processData(raw, type) {
+  let items = [];
+
+  // Try to normalize various response shapes
+  if (Array.isArray(raw)) items = raw;
+  else if (raw.data && Array.isArray(raw.data)) items = raw.data;
+  else if (raw.result && Array.isArray(raw.result)) items = raw.result;
+  else if (raw.history && Array.isArray(raw.history)) items = raw.history;
+  else if (raw.results && Array.isArray(raw.results)) items = raw.results;
+  else if (typeof raw === 'object') items = [raw];
+
+  historyData = items.slice(0, 50).map((item, idx) => normalizeItem(item, type, idx));
+  renderTable(type);
+  updateStats();
+  predict(type);
+}
+
+function normalizeItem(item, type, idx) {
+  const out = { id: null, result: null, dice: null, md5: null, extra: null };
+
+  // ID / session number
+  out.id = item.id || item.phien || item.session || item.round || item.no || (idx + 1);
+
+  // Dice values
+  if (item.dice) out.dice = Array.isArray(item.dice) ? item.dice : item.dice.toString().split('');
+  else if (item.xuc_xac) out.dice = item.xuc_xac;
+  else if (item.result_detail) out.dice = item.result_detail;
+
+  // MD5
+  out.md5 = item.md5 || item.hash || item.md5_hash || null;
+
+  // Result label
+  const r = (item.result || item.ket_qua || item.ketqua || item.outcome || '').toString().toLowerCase();
+  if (r.includes('tài') || r === 'tai' || r === 't' || r === 'big' || r === 'over') out.result = 'TAI';
+  else if (r.includes('xỉu') || r.includes('xiu') || r === 'x' || r === 'small' || r === 'under') out.result = 'XIU';
+  else if (r.includes('chẵn') || r.includes('chan') || r === 'even' || r === 'c') out.result = 'CHAN';
+  else if (r.includes('lẻ') || r.includes('le') || r === 'odd' || r === 'l') out.result = 'LE';
+  else {
+    // Try to compute from dice
+    if (out.dice) {
+      const sum = out.dice.reduce((a, b) => a + Number(b), 0);
+      out.result = sum >= 11 ? 'TAI' : 'XIU';
+      out.extra = `Tổng: ${sum}`;
+    } else if (item.total || item.sum) {
+      const s = Number(item.total || item.sum);
+      out.result = s >= 11 ? 'TAI' : 'XIU';
+      out.extra = `Tổng: ${s}`;
+    } else {
+      // fallback
+      const val = item.result || item.ket_qua || item.value || '';
+      out.result = String(val).toUpperCase() || 'N/A';
+    }
+  }
+
+  out.raw = item;
+  return out;
+}
+
+function resultBadge(result) {
+  if (result === 'TAI') return `<span class="badge badge-tai">TÀI</span>`;
+  if (result === 'XIU') return `<span class="badge badge-xiu">XỈU</span>`;
+  if (result === 'CHAN') return `<span class="badge badge-chan">CHẴN</span>`;
+  if (result === 'LE') return `<span class="badge badge-le">LẺ</span>`;
+  return `<span class="badge" style="background:rgba(255,255,255,0.05);color:var(--muted)">${result}</span>`;
+}
+
+function renderTable(type) {
+  const wrap = document.getElementById('tableWrap');
+  if (!historyData.length) {
+    wrap.innerHTML = `<div class="empty-state"><div>Không có dữ liệu</div></div>`;
+    return;
+  }
+
+  const showMd5 = historyData.some(d => d.md5);
+  const showDice = historyData.some(d => d.dice);
+
+  let html = `<table class="history-table"><thead><tr>
+    <th>#</th><th>Phiên</th>
+    ${showDice ? '<th>Xúc xắc</th>' : ''}
+    ${showMd5 ? '<th>MD5</th>' : ''}
+    <th>Kết quả</th>
+  </tr></thead><tbody>`;
+
+  historyData.forEach((item, i) => {
+    const cls = i === 0 ? ' class="new-row"' : '';
+    html += `<tr${cls}>
+      <td style="color:var(--muted);font-size:0.75rem">${i + 1}</td>
+      <td style="font-family:'Orbitron',monospace;font-size:0.75rem;color:var(--gold)">${item.id}</td>
+      ${showDice ? `<td style="letter-spacing:0.05em;font-size:0.8rem">${item.dice ? item.dice.join(' · ') : '-'}</td>` : ''}
+      ${showMd5 ? `<td><span class="badge badge-md5" title="${item.md5 || ''}">${item.md5 ? item.md5.substring(0,12) + '…' : '-'}</span></td>` : ''}
+      <td>${resultBadge(item.result)}${item.extra ? `<span style="font-size:0.7rem;color:var(--muted);margin-left:4px">${item.extra}</span>` : ''}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+  document.getElementById('roundCount').textContent = historyData.length + ' phiên';
+}
+
+function updateStats() {
+  const tai = historyData.filter(d => d.result === 'TAI').length;
+  const xiu = historyData.filter(d => d.result === 'XIU').length;
+  const chan = historyData.filter(d => d.result === 'CHAN').length;
+  const le = historyData.filter(d => d.result === 'LE').length;
+
+  document.getElementById('statTai').textContent = tai;
+  document.getElementById('statXiu').textContent = xiu;
+
+  // Streak dots (last 20)
+  const recent = historyData.slice(0, 20).reverse();
+  const dots = document.getElementById('streakDots');
+  dots.innerHTML = recent.map(d => {
+    if (d.result === 'TAI') return `<div class="dot dot-T">T</div>`;
+    if (d.result === 'XIU') return `<div class="dot dot-X">X</div>`;
+    if (d.result === 'CHAN') return `<div class="dot dot-C">C</div>`;
+    if (d.result === 'LE') return `<div class="dot dot-L">L</div>`;
+    return `<div class="dot" style="background:rgba(255,255,255,0.05);color:var(--muted);font-size:0.5rem">${d.result?.charAt(0)||'?'}</div>`;
+  }).join('');
+}
+
+function predict(type) {
+  if (historyData.length < 3) {
+    document.getElementById('predictResult').textContent = '---';
+    document.getElementById('predictResult').className = 'predict-result default';
+    document.getElementById('predictConf').textContent = 'Cần ít nhất 3 phiên';
+    document.getElementById('confBar').style.width = '0%';
+    return;
+  }
+
+  const results = historyData.map(d => d.result).filter(r => r === 'TAI' || r === 'XIU' || r === 'CHAN' || r === 'LE');
+  const isXocDia = results.some(r => r === 'CHAN' || r === 'LE');
+
+  let prediction, confidence;
+
+  if (isXocDia) {
+    // Chan/Le prediction
+    const chan = results.filter(r => r === 'CHAN').length;
+    const le = results.filter(r => r === 'LE').length;
+    const total = chan + le;
+
+    // Pattern: streak breaking tendency
+    let streak = 1;
+    for (let i = 1; i < Math.min(results.length, 10); i++) {
+      if (results[i] === results[0]) streak++;
+      else break;
+    }
+
+    if (streak >= 3) {
+      // Streak likely to break
+      prediction = results[0] === 'CHAN' ? 'LE' : 'CHAN';
+      confidence = 55 + Math.min(streak * 5, 25);
+    } else {
+      prediction = chan / total > 0.55 ? 'CHAN' : le / total > 0.55 ? 'LE' : (results[0] === 'CHAN' ? 'LE' : 'CHAN');
+      confidence = 50 + Math.abs(chan - le) / total * 30;
+    }
+  } else {
+    // Tai/Xiu prediction
+    const tai = results.filter(r => r === 'TAI').length;
+    const xiu = results.filter(r => r === 'XIU').length;
+    const total = tai + xiu;
+
+    // Pattern analysis
+    const last5 = results.slice(0, 5);
+    let streak = 1;
+    for (let i = 1; i < last5.length; i++) {
+      if (last5[i] === last5[0]) streak++;
+      else break;
+    }
+
+    // Recent trend vs overall ratio
+    const recent3 = results.slice(0, 3);
+    const recentTai = recent3.filter(r => r === 'TAI').length;
+
+    if (streak >= 4) {
+      prediction = last5[0] === 'TAI' ? 'XIU' : 'TAI';
+      confidence = 60 + Math.min(streak * 4, 25);
+    } else if (Math.abs(tai - xiu) / total > 0.3) {
+      prediction = tai > xiu ? 'XIU' : 'TAI';
+      confidence = 50 + Math.abs(tai - xiu) / total * 40;
+    } else {
+      prediction = recentTai >= 2 ? 'XIU' : 'TAI';
+      confidence = 52 + Math.random() * 8;
+    }
+  }
+
+  confidence = Math.min(Math.max(Math.round(confidence), 50), 92);
+
+  const el = document.getElementById('predictResult');
+  el.textContent = prediction === 'TAI' ? 'TÀI' : prediction === 'XIU' ? 'XỈU' : prediction === 'CHAN' ? 'CHẴN' : 'LẺ';
+  el.className = 'predict-result ' + prediction;
+  document.getElementById('predictConf').textContent = `Độ tin cậy: ${confidence}%`;
+  document.getElementById('confBar').style.width = confidence + '%';
+}
+
+function toggleAuto() {
+  autoRefresh = !autoRefresh;
+  document.getElementById('autoToggle').classList.toggle('on', autoRefresh);
+  if (autoRefresh) {
+    countdown = 30;
+    startCountdown();
+    autoTimer = setInterval(() => {
+      fetchData();
+      countdown = 30;
+    }, 30000);
+  } else {
+    clearInterval(autoTimer);
+    clearInterval(cdInterval);
+    document.getElementById('countdown').textContent = '';
+  }
+}
+
+function startCountdown() {
+  clearInterval(cdInterval);
+  cdInterval = setInterval(() => {
+    countdown--;
+    document.getElementById('countdown').textContent = countdown + 's';
+    if (countdown <= 0) { countdown = 30; }
+  }, 1000);
+}
+
+// Init
+buildApiTabs();
+</script>
+</body>
+</html>
