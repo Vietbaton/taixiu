@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: sun-api
+    env: node
+    buildCommand: npm install
+    startCommand: node sun.js
